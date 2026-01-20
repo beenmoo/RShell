@@ -29,9 +29,9 @@ void Shell::GetInput()
 
 void Shell::ProcessInput()
 {
-    Utils::Logging::LogMessage("Input: " + mInput + "\n");
+    LOG_MESSAGE("Input: " + mInput + "\n", Logging::LogType::None);
 
     std::vector<Token> tokens = mLexer.TokenizeInput(mInput);
-    auto postfix = mParser.Parse(tokens);
-    mExecutor.Execute(postfix);
+    auto root = mParser.Parse(tokens);
+    mExecutor.Execute(root);
 }

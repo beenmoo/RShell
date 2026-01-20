@@ -1,31 +1,31 @@
 #include "ConnectorCommand.h"
 
-void ConnectorCommand::SetLeftCommand(const std::shared_ptr<Command>& cmd)
+void ConnectorCommand::SetLeft(const Ref<Command>& cmd)
 {
     mLeftCommand = cmd;
 }
 
-void ConnectorCommand::SetRightCommand(const std::shared_ptr<Command>&cmd)
+void ConnectorCommand::SetRight(const Ref<Command>& cmd)
 {
     mRightCommand = cmd;
 }
 
-Command* ConnectorCommand::GetLeftCommand()
+Command* ConnectorCommand::GetLeft()
 {
     return mLeftCommand.get();
 }
 
-const Command* ConnectorCommand::GetLeftCommand() const
+const Command* ConnectorCommand::GetLeft() const
 {
     return mLeftCommand.get();
 }
 
-Command* ConnectorCommand::GetRightCommand()
+Command* ConnectorCommand::GetRight()
 {
     return mRightCommand.get();
 }
 
-const Command* ConnectorCommand::GetRightCommand() const
+const Command* ConnectorCommand::GetRight() const
 {
     return mRightCommand.get();
 }

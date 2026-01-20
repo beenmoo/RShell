@@ -7,8 +7,8 @@ OrCommand::OrCommand()
 
 bool OrCommand::Execute()
 {
-    if (!GetLeftCommand()->Execute())
-        return GetRightCommand()->Execute();
+    if (!GetLeft()->Execute())
+        return GetRight()->Execute();
 
     return false;
 }

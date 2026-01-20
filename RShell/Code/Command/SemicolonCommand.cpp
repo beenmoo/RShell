@@ -7,7 +7,7 @@ SemicolonCommand::SemicolonCommand()
 
 bool SemicolonCommand::Execute()
 {
-    GetLeftCommand()->Execute();
+    GetLeft()->Execute();
 
-    return GetRightCommand()->Execute();
+    return GetRight()->Execute();
 }

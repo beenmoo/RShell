@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Command.h"
-
-#include <memory>
+#include "Utils/Ref.h"
 
 class ConnectorCommand : public Command
 {
@@ -11,15 +10,15 @@ public:
 
     virtual bool Execute() = 0;
 
-    void SetLeftCommand(const std::shared_ptr<Command>& cmd);
-    void SetRightCommand(const std::shared_ptr<Command>& cmd);
+    void SetLeft(const Ref<Command>& cmd);
+    void SetRight(const Ref<Command>& cmd);
 
-    Command* GetLeftCommand();
-    const Command* GetLeftCommand() const;
-    Command* GetRightCommand();
-    const Command* GetRightCommand() const;
+    Command* GetLeft();
+    const Command* GetLeft() const;
+    Command* GetRight();
+    const Command* GetRight() const;
 
 private:
-    std::shared_ptr<Command> mLeftCommand = nullptr;
-    std::shared_ptr<Command> mRightCommand = nullptr;
+    Ref<Command> mLeftCommand = nullptr;
+    Ref<Command> mRightCommand = nullptr;
 };

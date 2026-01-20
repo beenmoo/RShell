@@ -5,8 +5,6 @@
 
 std::vector<Token> Lexer::TokenizeInput(std::string& input)
 {
-    Reset();
-
     mInput = input;
 
     std::istringstream iss(input);
@@ -47,24 +45,4 @@ std::vector<Token> Lexer::TokenizeInput(std::string& input)
     }
 
     return tokens;
-}
-
-bool Lexer::AdvanceCursor()
-{
-    if (mCursor + 1 >= mInput.size())
-        return false;
-
-    ++mCursor;
-
-    return false;
-}
-
-char Lexer::GetToken() const
-{
-    return mInput[mCursor];
-}
-
-void Lexer::Reset()
-{
-    mCursor = 0;
 }

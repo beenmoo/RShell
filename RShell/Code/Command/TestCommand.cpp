@@ -87,8 +87,7 @@ bool TestCommand::Execute()
 
 void TestCommand::LogError() const
 {
-    Utils::Logging::LogMessage("Invalid syntax.",
-                               Utils::Logging::LogType::Error);
+    LOG_MESSAGE("Invalid syntax.", Logging::LogType::Error);
 }
 
 LeftLegacyTestCommand::LeftLegacyTestCommand()

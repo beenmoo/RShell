@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 
-namespace Utils::Logging
+namespace Logging
 {
     enum class LogType
     {
@@ -74,3 +74,5 @@ namespace Utils::Logging
         return "None";
     }
 }
+
+#define LOG_MESSAGE(msg, type) ::Logging::LogMessage((msg), (type))

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <memory>
+#include "Utils/Ref.h"
 
 class Command;
 
 class Executor
 {
 public:
-    void Execute(std::vector<std::shared_ptr<Command>> postfix);
+    void Execute(const Ref<Command>& root);
 };
