@@ -2,11 +2,14 @@
 
 AndCommand::AndCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::And);
+    SetTokenType(TokenSpec::TokenType::And);
 }
 
 bool AndCommand::Execute()
 {
+    if (!GetLeft() || !GetRight())
+        return false;
+
     if (GetLeft()->Execute())
         return GetRight()->Execute();
 

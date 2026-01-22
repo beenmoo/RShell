@@ -2,7 +2,7 @@
 
 ExitCommand::ExitCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::Exit);
+    SetTokenType(TokenSpec::TokenType::Exit);
 }
 
 bool ExitCommand::Execute()

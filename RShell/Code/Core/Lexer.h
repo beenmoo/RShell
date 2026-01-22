@@ -7,12 +7,6 @@
 
 class Lexer
 {
-private:
-    enum class LexerState
-    {
-        State
-    };
-
 public:
     std::vector<Token> TokenizeInput(std::string& input);
 

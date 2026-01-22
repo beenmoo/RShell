@@ -2,7 +2,7 @@
 
 LeftParenthesisCommand::LeftParenthesisCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::LeftParenthesis);
+    SetTokenType(TokenSpec::TokenType::LeftParenthesis);
 }
 
 bool LeftParenthesisCommand::Execute()
@@ -12,7 +12,7 @@ bool LeftParenthesisCommand::Execute()
 
 RightParenthesisCommand::RightParenthesisCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::RightParenthesis);
+    SetTokenType(TokenSpec::TokenType::RightParenthesis);
 }
 
 bool RightParenthesisCommand::Execute()

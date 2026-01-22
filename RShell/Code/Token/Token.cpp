@@ -14,27 +14,27 @@ const std::string& Token::GetValue() const
     return mValue;
 }
 
-void Token::SetTokenType(TokenSpecification::TokenType type)
+void Token::SetTokenType(TokenSpec::TokenType type)
 {
-    mSpecification.SetTokenType(type);
+    mSpec.SetTokenType(type);
 }
 
-const Token::TokenSpecification& Token::GetSpecification() const
+const TokenSpec& Token::GetSpec() const
 {
-    return mSpecification;
+    return mSpec;
 }
 
-void Token::TokenSpecification::SetTokenType(TokenSpecification::TokenType type)
+void TokenSpec::SetTokenType(TokenSpec::TokenType type)
 {
     mTokenType = type;
 }
 
-Token::TokenSpecification::TokenType Token::TokenSpecification::GetTokenType() const
+TokenSpec::TokenType TokenSpec::GetTokenType() const
 {
     return mTokenType;
 }
 
-Token::TokenSpecification::TokenBaseType Token::TokenSpecification::GetTokenBaseType() const
+TokenSpec::TokenBaseType TokenSpec::GetTokenBaseType() const
 {
     switch (mTokenType)
     {

@@ -1,5 +1,5 @@
 #include "TestCommand.h"
-#include "Utils/LoggingUtils.h"
+#include "Utils/Logging.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -8,7 +8,7 @@
 
 TestCommand::TestCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::Test);
+    SetTokenType(TokenSpec::TokenType::Test);
 }
 
 bool TestCommand::Execute()
@@ -87,12 +87,12 @@ bool TestCommand::Execute()
 
 void TestCommand::LogError() const
 {
-    LOG_MESSAGE("Invalid syntax.", Logging::LogType::Error);
+    LOG_ERROR("Invalid syntax.");
 }
 
 LeftLegacyTestCommand::LeftLegacyTestCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::LeftLegacyTest);
+    SetTokenType(TokenSpec::TokenType::LeftLegacyTest);
 }
 
 bool LeftLegacyTestCommand::Execute()
@@ -102,7 +102,7 @@ bool LeftLegacyTestCommand::Execute()
 
 RightLegacyTestCommand::RightLegacyTestCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::RightLegacyTest);
+    SetTokenType(TokenSpec::TokenType::RightLegacyTest);
 }
 
 bool RightLegacyTestCommand::Execute()

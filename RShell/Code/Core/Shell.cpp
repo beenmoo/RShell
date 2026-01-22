@@ -1,11 +1,13 @@
 #include "Shell.h"
 #include "Token/Token.h"
-#include "Utils/LoggingUtils.h"
+#include "Utils/Logging.h"
 
 #include <iostream>
 
 void Shell::Run()
 {
+    Logger::SetInstance(&mLogger);
+
     while (true)
         Update();
 }
@@ -19,7 +21,7 @@ void Shell::Update()
 
 void Shell::PrintPrompt()
 {
-    std::cout << "$ ";
+    LOG_MESSAGE("$ ");
 }
 
 void Shell::GetInput()
@@ -29,9 +31,7 @@ void Shell::GetInput()
 
 void Shell::ProcessInput()
 {
-    LOG_MESSAGE("Input: " + mInput + "\n", Logging::LogType::None);
-
     std::vector<Token> tokens = mLexer.TokenizeInput(mInput);
-    auto root = mParser.Parse(tokens);
-    mExecutor.Execute(root);
+    auto postfix = mParser.Parse(tokens);
+    mExecutor.Execute(postfix);
 }

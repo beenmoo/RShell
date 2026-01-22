@@ -18,9 +18,9 @@ size_t Command::GetArgumentCount() const
     return mArguments.size() - 1;
 }
 
-const Token::TokenSpecification& Command::GetTokenSpecification() const
+const TokenSpec& Command::GetSpec() const
 {
-    return mSpecification;
+    return mSpec;
 }
 
 Command::ConstIterator Command::begin() const
@@ -43,7 +43,7 @@ Command::ConstIterator Command::begin() const
      return mArguments.cend();
  }
 
- void Command::SetTokenType(Token::TokenSpecification::TokenType type)
+ void Command::SetTokenType(TokenSpec::TokenType type)
  {
-     mSpecification.SetTokenType(type);
+     mSpec.SetTokenType(type);
  }

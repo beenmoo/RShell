@@ -20,7 +20,7 @@ public:
 
     size_t GetArgumentCount() const;
 
-    const Token::TokenSpecification& GetTokenSpecification() const;
+    const TokenSpec& GetSpec() const;
 
     ConstIterator begin() const;
     ConstIterator end() const;
@@ -28,10 +28,10 @@ public:
     ConstIterator cend() const;
 
 protected:
-    void SetTokenType(Token::TokenSpecification::TokenType type);
+    void SetTokenType(TokenSpec::TokenType type);
 
 private:
-    Token::TokenSpecification mSpecification;
+    TokenSpec mSpec;
 
     Arguments mArguments;
 };

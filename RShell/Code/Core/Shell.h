@@ -3,6 +3,7 @@
 #include "Executor.h"
 #include "Lexer.h"
 #include "Parser.h"
+#include "Utils/Logging.h"
 
 #include <string>
 
@@ -21,6 +22,7 @@ private:
 private:
     std::string mInput;
 
+    Logger mLogger;
     Executor mExecutor;
     Lexer mLexer;
     Parser mParser;

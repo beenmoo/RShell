@@ -2,13 +2,16 @@
 
 OrCommand::OrCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::Or);
+    SetTokenType(TokenSpec::TokenType::Or);
 }
 
 bool OrCommand::Execute()
 {
+    if (!GetLeft() || !GetRight())
+        return false;
+
     if (!GetLeft()->Execute())
         return GetRight()->Execute();
 
-    return false;
+    return true;
 }

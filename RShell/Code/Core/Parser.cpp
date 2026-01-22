@@ -1,308 +1,187 @@
 #include "Parser.h"
 #include "Command/Command.h"
-#include "Command/ConnectorCommand.h"
-#include "Command/SingleCommand.h"
-#include "Command/OrCommand.h"
-#include "Command/AndCommand.h"
-#include "Command/SemicolonCommand.h"
-#include "Command/ExitCommand.h"
-#include "Command/TestCommand.h"
-#include "Command/ParenthesisCommand.h"
-#include "Utils/LoggingUtils.h"
+#include "Command/CommandFactory.h"
+#include "Utils/Logging.h"
 
-Ref<Command> Parser::Parse(const std::vector<Token>& tokens)
+std::vector<Ref<Command>> Parser::Parse(const std::vector<Token>& tokens)
 {
     Reset();
-
     mTokens = tokens;
-    mCursor = 0;
+    ConstructCommands();
+    ConstructPostfix();
 
-    auto root = ParseExpression();
-    if (!root)
-        return nullptr;
-
-    if (HasMoreTokens())
-    {
-        LogError(ErrorState::ConnectorError);
-
-        return nullptr;
-    }
-
-    return root;
+    return mPostfixCommands;
 }
 
-Ref<Command> Parser::ParseExpression()
+void Parser::ConstructCommands()
 {
-    return ParseSequence();
-}
-
-Ref<Command> Parser::ParseSequence()
-{
-    auto left = ParseOr();
-    if (!left)
-        return nullptr;
-
-    while (Match(Token::TokenSpecification::TokenType::Semicolon))
-    {
-        auto right = ParseOr();
-        if (!right)
-            return nullptr;
-
-        auto connector = CreateCommand(mTokens[mCursor - 1],
-                                       { mTokens[mCursor - 1] });
-        auto connectorCmd = std::dynamic_pointer_cast<ConnectorCommand>(connector);
-        connectorCmd->SetLeft(left);
-        connectorCmd->SetRight(right);
-        left = connector;
-    }
-
-    return left;
-}
-
-Ref<Command> Parser::ParseOr()
-{
-    auto left = ParseAnd();
-    if (!left)
-        return nullptr;
-
-    while (Match(Token::TokenSpecification::TokenType::Or))
-    {
-        auto right = ParseAnd();
-        if (!right)
-            return nullptr;
-
-        auto connector = CreateCommand(mTokens[mCursor - 1],
-                                       { mTokens[mCursor - 1] });
-        auto connectorCmd = std::dynamic_pointer_cast<ConnectorCommand>(connector);
-        connectorCmd->SetLeft(left);
-        connectorCmd->SetRight(right);
-        left = connector;
-    }
-
-    return left;
-}
-
-Ref<Command> Parser::ParseAnd()
-{
-    auto left = ParsePrimary();
-    if (!left)
-        return nullptr;
-
-    while (Match(Token::TokenSpecification::TokenType::And))
-    {
-        auto right = ParsePrimary();
-        if (!right)
-            return nullptr;
-
-        auto connector = CreateCommand(mTokens[mCursor - 1],
-                                       { mTokens[mCursor - 1] });
-        auto connectorCmd = std::dynamic_pointer_cast<ConnectorCommand>(connector);
-        connectorCmd->SetLeft(left);
-        connectorCmd->SetRight(right);
-        left = connector;
-    }
-
-    return left;
-}
-
-Ref<Command> Parser::ParsePrimary()
-{
-    if (!HasMoreTokens())
-    {
-        LogError(ErrorState::OperandError);
-
-        return nullptr;
-    }
-
-    const auto type = PeekToken().GetSpecification().GetTokenType();
-
-    if (type == Token::TokenSpecification::TokenType::LeftParenthesis)
-    {
-        Match(Token::TokenSpecification::TokenType::LeftParenthesis);
-
-        auto expr = ParseExpression();
-        if (!expr)
-            return nullptr;
-
-        if (!Match(Token::TokenSpecification::TokenType::RightParenthesis))
-        {
-            LogError(ErrorState::BracketError);
-
-            return nullptr;
-        }
-
-        return expr;
-    }
-
-    if (type == Token::TokenSpecification::TokenType::LeftLegacyTest)
-    {
-        Match(Token::TokenSpecification::TokenType::LeftLegacyTest);
-
-        std::vector<Token> legacyArgs;
-        legacyArgs.emplace_back(mTokens[mCursor - 1]);
-
-        while (HasMoreTokens() &&
-               PeekToken().GetSpecification().GetTokenType() !=
-                   Token::TokenSpecification::TokenType::RightLegacyTest)
-        {
-            legacyArgs.emplace_back(PeekToken());
-            ++mCursor;
-        }
-
-        if (!Match(Token::TokenSpecification::TokenType::RightLegacyTest))
-        {
-            LogError(ErrorState::BracketError);
-
-            return nullptr;
-        }
-
-        legacyArgs.emplace_back(mTokens[mCursor - 1]);
-
-        auto legacyCmd = CreateRef<TestCommand>();
-        legacyCmd->SetArguments(legacyArgs);
-        return legacyCmd;
-    }
-
-    return ParseCommand();
-}
-
-Ref<Command> Parser::ParseCommand()
-{
-    if (!HasMoreTokens())
-    {
-        LogError(ErrorState::OperandError);
-
-        return nullptr;
-    }
-
-    const auto type = PeekToken().GetSpecification().GetTokenType();
-
-    if (!IsOperandStart(type))
-    {
-        if (IsDelimiterToken(type))
-            LogError(ErrorState::OperandError);
-        else
-            LogError(ErrorState::ConnectorError);
-
-        return nullptr;
-    }
-
     std::vector<Token> args;
 
-    while (HasMoreTokens() && !IsDelimiterToken(PeekToken().GetSpecification().GetTokenType()))
+    for (const auto& token : mTokens)
     {
-        const auto nextType = PeekToken().GetSpecification().GetTokenType();
-
-        if (nextType == Token::TokenSpecification::TokenType::LeftParenthesis ||
-            nextType == Token::TokenSpecification::TokenType::LeftLegacyTest)
+        if (token.GetSpec().GetTokenBaseType() == 
+            TokenSpec::TokenBaseType::Connector)
         {
-            LogError(ErrorState::ConnectorError);
+            if (!args.empty())
+            {
+                mInfixCommands.emplace_back(CommandFactory::Create(args.front(), args));
+                args.clear();
+            }
 
-            return nullptr;
+            auto connector = CommandFactory::Create(token);
+            connector->AddArgument(token);
+            mInfixCommands.emplace_back(connector);
+        }
+        else
+            args.emplace_back(token);
+    }
+
+    if (!args.empty())
+        mInfixCommands.emplace_back(CommandFactory::Create(args.front(), args));
+}
+
+bool Parser::ConstructPostfix()
+{
+    for (const auto& cmd : mInfixCommands)
+    {
+        switch (mShuntingState)
+        {
+        case ShuntingState::ExpectOperand:
+            if (ProcessLeftBracket(cmd))
+                break;
+
+            if (ProcessRightBracket(cmd))
+            {
+                LogError(ErrorState::OperandError);
+                return false;
+            }
+            if (ProcessConnectorsPostfix(cmd))
+            {
+                LogError(ErrorState::OperandError);
+                return false;
+            }
+
+            mPostfixCommands.emplace_back(cmd);
+            mShuntingState = ShuntingState::ExpectConnector;
+            break;
+        case ShuntingState::ExpectConnector:
+            if (ProcessRightBracket(cmd))
+                break;
+
+            if (ProcessLeftBracket(cmd))
+            {
+                LogError(ErrorState::ConnectorError);
+                return false;
+            }
+
+            if (!ProcessConnectorsPostfix(cmd))
+            {
+                LogError(ErrorState::OperandError);
+                return false;
+            }
+
+            mShuntingState = ShuntingState::ExpectOperand;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (mShuntingState != ShuntingState::ExpectConnector)
+    {
+        LogError(ErrorState::ConnectorError);
+        return false;
+    }
+
+    while (!mConnectors.empty())
+    {
+        if (mConnectors.top()->GetSpec().GetTokenBaseType() ==
+            TokenSpec::TokenBaseType::Bracket)
+        {
+            LogError(ErrorState::BracketError);
+            return false;
         }
 
-        args.emplace_back(PeekToken());
-        ++mCursor;
+        mPostfixCommands.emplace_back(mConnectors.top());
+        mConnectors.pop();
     }
-
-    if (args.empty())
-    {
-        LogError(ErrorState::OperandError);
-
-        return nullptr;
-    }
-
-    return CreateCommand(args.front(), args);
-}
-
-bool Parser::HasMoreTokens() const
-{
-    return mCursor < mTokens.size();
-}
-
-const Token& Parser::PeekToken() const
-{
-    return mTokens[mCursor];
-}
-
-bool Parser::Match(Token::TokenSpecification::TokenType type)
-{
-    if (!HasMoreTokens())
-        return false;
-
-    if (PeekToken().GetSpecification().GetTokenType() != type)
-        return false;
-
-    ++mCursor;
 
     return true;
 }
 
-bool Parser::IsConnectorToken(Token::TokenSpecification::TokenType type) const
+bool Parser::ProcessConnectorsPostfix(const Ref<Command>& cmd)
 {
-    return type == Token::TokenSpecification::TokenType::And ||
-           type == Token::TokenSpecification::TokenType::Or ||
-           type == Token::TokenSpecification::TokenType::Semicolon;
-}
-
-bool Parser::IsDelimiterToken(Token::TokenSpecification::TokenType type) const
-{
-    return IsConnectorToken(type) ||
-           type == Token::TokenSpecification::TokenType::RightParenthesis ||
-           type == Token::TokenSpecification::TokenType::RightLegacyTest;
-}
-
-bool Parser::IsOperandStart(Token::TokenSpecification::TokenType type) const
-{
-    return type == Token::TokenSpecification::TokenType::SingleCommand ||
-           type == Token::TokenSpecification::TokenType::Exit ||
-           type == Token::TokenSpecification::TokenType::Test;
-}
-
-Ref<Command> Parser::CreateCommand(const Token& token, 
-                                           const std::vector<Token>& args)
-{
-    Ref<Command> cmd = nullptr;
-
-    switch (token.GetSpecification().GetTokenType())
+    if (cmd->GetSpec().GetTokenBaseType() ==
+        TokenSpec::TokenBaseType::Connector)
     {
-    case Token::TokenSpecification::TokenType::And:
-        cmd = CreateRef<AndCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::Or:
-        cmd = CreateRef<OrCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::Semicolon:
-        cmd = CreateRef<SemicolonCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::SingleCommand:
-        cmd = CreateRef<SingleCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::Exit:
-        cmd = CreateRef<ExitCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::Test:
-        cmd = CreateRef<TestCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::LeftLegacyTest:
-        cmd = CreateRef<LeftLegacyTestCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::RightLegacyTest:
-        cmd = CreateRef<RightLegacyTestCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::LeftParenthesis:
-        cmd = CreateRef<LeftParenthesisCommand>();
-        break;
-    case Token::TokenSpecification::TokenType::RightParenthesis:
-        cmd = CreateRef<RightParenthesisCommand>();
-        break;
-    default:
-        break;
+        while (!mConnectors.empty())
+        {
+            mPostfixCommands.emplace_back(mConnectors.top());
+            mConnectors.pop();
+        }
+
+        mConnectors.emplace(cmd);
+        return true;
     }
 
-    cmd->SetArguments(args);
+    return false;
+}
 
-    return cmd;
+bool Parser::ProcessLeftBracket(const Ref<Command>& cmd)
+{
+    if (cmd->GetSpec().GetTokenType() ==
+        TokenSpec::TokenType::LeftParenthesis ||
+        cmd->GetSpec().GetTokenType() ==
+        TokenSpec::TokenType::LeftLegacyTest)
+    {
+        mConnectors.emplace(cmd);
+        return true;
+    }
+
+    return false;
+}
+
+bool Parser::ProcessRightBracket(const Ref<Command>& cmd)
+{
+    if (cmd->GetSpec().GetTokenType() ==
+        TokenSpec::TokenType::RightParenthesis)
+    {
+        while (!mConnectors.empty())
+        {
+            if (mConnectors.top()->GetSpec().GetTokenType() !=
+                TokenSpec::TokenType::LeftParenthesis)
+            {
+                mConnectors.pop();
+                break;
+            }
+
+            mPostfixCommands.emplace_back(mConnectors.top());
+            mConnectors.pop();
+        }
+
+        return true;
+    }
+
+    if (cmd->GetSpec().GetTokenType() ==
+        TokenSpec::TokenType::RightLegacyTest)
+    {
+        while (!mConnectors.empty())
+        {
+            if (mConnectors.top()->GetSpec().GetTokenType() !=
+                TokenSpec::TokenType::LeftLegacyTest)
+            {
+                mConnectors.pop();
+                break;
+            }
+
+            mPostfixCommands.emplace_back(mConnectors.top());
+            mConnectors.pop();
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 void Parser::LogError(ErrorState state) const
@@ -310,16 +189,13 @@ void Parser::LogError(ErrorState state) const
     switch (state)
     {
     case ErrorState::OperandError:
-        LOG_MESSAGE("Unexpected token: expected Operand.\n",
-                    Logging::LogType::Error);
+        LOG_ERROR("Unexpected token: expected Operand.\n");
         break;
     case ErrorState::ConnectorError:
-        LOG_MESSAGE("Unexpected token: expected Connector.\n",
-                    Logging::LogType::Error);
+        LOG_ERROR("Unexpected token: expected Connector.\n");
         break;
     case ErrorState::BracketError:
-        LOG_MESSAGE("Unexpected token: expected Bracket.\n",
-                    Logging::LogType::Error);
+        LOG_ERROR("Unexpected token: expected Bracket.\n");
         break;
     default:
         break;
@@ -328,6 +204,8 @@ void Parser::LogError(ErrorState state) const
 
 void Parser::Reset()
 {
-    mTokens.clear();
-    mCursor = 0;
+    mInfixCommands.clear();
+    mPostfixCommands.clear();
+    mConnectors = {};
+    mShuntingState = ShuntingState::ExpectOperand;
 }

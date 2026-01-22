@@ -13,6 +13,13 @@ class Command;
 class Parser
 {
 private:
+    enum class ShuntingState
+    {
+        ExpectOperand,
+        ExpectConnector,
+        ExpectBracket
+    };
+
     enum class ErrorState
     {
         None,
@@ -22,26 +29,14 @@ private:
     };
 
 public:
-    Ref<Command> Parse(const std::vector<Token>& tokens);
+    std::vector<Ref<Command>> Parse(const std::vector<Token>& tokens);
 
 private:
-    Ref<Command> ParseExpression();
-    Ref<Command> ParseSequence();
-    Ref<Command> ParseOr();
-    Ref<Command> ParseAnd();
-    Ref<Command> ParsePrimary();
-    Ref<Command> ParseCommand();
-
-    bool HasMoreTokens() const;
-    const Token& PeekToken() const;
-    bool Match(Token::TokenSpecification::TokenType type);
-
-    bool IsConnectorToken(Token::TokenSpecification::TokenType type) const;
-    bool IsDelimiterToken(Token::TokenSpecification::TokenType type) const;
-    bool IsOperandStart(Token::TokenSpecification::TokenType type) const;
-
-    Ref<Command> CreateCommand(const Token& token,
-                               const std::vector<Token>& args = {});
+    void ConstructCommands();
+    bool ConstructPostfix();
+    bool ProcessConnectorsPostfix(const Ref<Command>& cmd);
+    bool ProcessLeftBracket(const Ref<Command>& cmd);
+    bool ProcessRightBracket(const Ref<Command>& cmd);
 
     void LogError(ErrorState state) const;
 
@@ -49,5 +44,8 @@ private:
 
 private:
     std::vector<Token> mTokens;
-    size_t mCursor = 0;
+    std::vector<Ref<Command>> mInfixCommands;
+    std::vector<Ref<Command>> mPostfixCommands;
+    std::stack<Ref<Command>> mConnectors;
+    ShuntingState mShuntingState = ShuntingState::ExpectOperand;
 };

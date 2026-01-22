@@ -7,7 +7,7 @@
 
 SingleCommand::SingleCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::SingleCommand);
+    SetTokenType(TokenSpec::TokenType::SingleCommand);
 }
 
 bool SingleCommand::Execute()

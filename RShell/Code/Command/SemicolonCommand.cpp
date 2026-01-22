@@ -2,11 +2,14 @@
 
 SemicolonCommand::SemicolonCommand()
 {
-    SetTokenType(Token::TokenSpecification::TokenType::Semicolon);
+    SetTokenType(TokenSpec::TokenType::Semicolon);
 }
 
 bool SemicolonCommand::Execute()
 {
+    if (!GetLeft() || !GetRight())
+        return false;
+
     GetLeft()->Execute();
 
     return GetRight()->Execute();

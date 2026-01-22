@@ -19,25 +19,25 @@ std::vector<Token> Lexer::TokenizeInput(std::string& input)
             break;
 
         if (tokenValue == "||")
-            token.SetTokenType(Token::TokenSpecification::TokenType::Or);
+            token.SetTokenType(TokenSpec::TokenType::Or);
         else if (tokenValue == "&&")
-            token.SetTokenType(Token::TokenSpecification::TokenType::And);
+            token.SetTokenType(TokenSpec::TokenType::And);
         else if (tokenValue == ";")
-            token.SetTokenType(Token::TokenSpecification::TokenType::Semicolon);
+            token.SetTokenType(TokenSpec::TokenType::Semicolon);
         else if (tokenValue == "exit")
-            token.SetTokenType(Token::TokenSpecification::TokenType::Exit);
+            token.SetTokenType(TokenSpec::TokenType::Exit);
         else if (tokenValue == "test")
-            token.SetTokenType(Token::TokenSpecification::TokenType::Test);
+            token.SetTokenType(TokenSpec::TokenType::Test);
         else if (tokenValue == "[")
-            token.SetTokenType(Token::TokenSpecification::TokenType::LeftLegacyTest);
+            token.SetTokenType(TokenSpec::TokenType::LeftLegacyTest);
         else if (tokenValue == "]")
-            token.SetTokenType(Token::TokenSpecification::TokenType::RightLegacyTest);
+            token.SetTokenType(TokenSpec::TokenType::RightLegacyTest);
         else if (tokenValue == "(")
-            token.SetTokenType(Token::TokenSpecification::TokenType::LeftParenthesis);
+            token.SetTokenType(TokenSpec::TokenType::LeftParenthesis);
         else if (tokenValue == ")")
-            token.SetTokenType(Token::TokenSpecification::TokenType::RightParenthesis);
+            token.SetTokenType(TokenSpec::TokenType::RightParenthesis);
         else
-            token.SetTokenType(Token::TokenSpecification::TokenType::SingleCommand);
+            token.SetTokenType(TokenSpec::TokenType::SingleCommand);
 
         token.SetValue(tokenValue);
 
