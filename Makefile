@@ -1,8 +1,8 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -I RShell/Code
+CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -I Code
 LDFLAGS :=
 
-SRC := $(shell find RShell/Code -name '*.cpp')
+SRC := $(shell find Code -name '*.cpp')
 OBJ := $(SRC:.cpp=.o)
 BIN_DIR := bin
 TARGET := $(BIN_DIR)/rshell
@@ -24,5 +24,5 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	find RShell/Code -name '*.o' -delete
+	find Code -name '*.o' -delete
 	rm -f $(TARGET)
