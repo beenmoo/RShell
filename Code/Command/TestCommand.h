@@ -1,33 +1,20 @@
 #pragma once
 
-#include "ConnectorCommand.h"
+#include "Command.h"
 
-class TestCommand : public ConnectorCommand
+#include <string>
+
+class TestCommand : public Command
 {
 public:
-    TestCommand();
-    virtual ~TestCommand() override = default;
+    TestCommand(std::string flag, std::string path);
+    ~TestCommand() override = default;
 
-    virtual bool Execute() override;
+    bool Execute() override;
 
 private:
     void LogError() const;
-};
 
-class LeftLegacyTestCommand : public ConnectorCommand
-{
-public:
-    LeftLegacyTestCommand();
-    virtual ~LeftLegacyTestCommand() override = default;
-
-    virtual bool Execute() override;
-};
-
-class RightLegacyTestCommand : public ConnectorCommand
-{
-public:
-    RightLegacyTestCommand();
-    virtual ~RightLegacyTestCommand() override = default;
-
-    virtual bool Execute() override;
+    std::string mFlag;
+    std::string mPath;
 };

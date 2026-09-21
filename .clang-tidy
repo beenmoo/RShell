@@ -1,0 +1,160 @@
+---
+# clang-tidy config for RShell.
+#
+# Scope: only project code is linted. HeaderFilterRegex below restricts diagnostics to headers
+# under Code/, so anything reached transitively from vcpkg-managed dependencies is never reported
+# on.
+#
+# To run against a specific build (needs a compile_commands.json - CMakePresets.json's "windows"
+# and "linux-debug"/"linux-release" presets set CMAKE_EXPORT_COMPILE_COMMANDS):
+#   clang-tidy -p Build/linux-debug Code/Core/Shell.cpp
+# Or via run-clang-tidy across the whole tree:
+#   run-clang-tidy -p Build/linux-debug Code
+
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+
+  -bugprone-exception-escape,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+  -cppcoreguidelines-special-member-functions,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -portability-avoid-pragma-once,
+  -readability-braces-around-statements,
+  -readability-convert-member-functions-to-static,
+  -readability-magic-numbers,
+  -readability-uppercase-literal-suffix
+
+WarningsAsErrors: ''
+HeaderFilterRegex: 'RShell[\\/]Code[\\/].*'
+FormatStyle: file
+
+# Rationale for the disables above, grouped by why - not a blanket "quiet everything" pass:
+#
+# Conflicts with an established, deliberate pattern in this codebase:
+#   - readability-braces-around-statements: single-statement if/else bodies are written without
+#     braces throughout (e.g. SingleCommand::Execute's "if (!pid) ..." chain, Parser.cpp's
+#     "else args.emplace_back(token);") - enabling this would flag nearly every short control-flow
+#     statement in the codebase.
+#   - modernize-use-trailing-return-type: not the house style; every declaration here is
+#     "ReturnType Name(...)".
+#   - modernize-use-nodiscard: this codebase doesn't use [[nodiscard]] anywhere yet; auto-suggesting
+#     it on every non-void function (Execute, GetValue, GetSpec, ...) would relitigate that as a
+#     drive-by rename instead of a deliberate adoption.
+#   - portability-avoid-pragma-once: every header opens with "#pragma once", universally supported
+#     by the compilers this project targets (MSVC, Clang, GCC).
+#
+# Noisy for this codebase, not indicative of a real problem:
+#   - bugprone-exception-escape: main() wraps Shell::Run() in try/catch(const std::exception&) -
+#     deliberately, so an uncaught exception reports a message and exits cleanly instead of an
+#     abrupt terminate(). The check still fires because iostream's operator<< can theoretically
+#     throw std::ios_base::failure if a stream's exception mask is configured to do so - which
+#     nothing in this codebase does. Since every function that touches std::cout/std::cerr (which
+#     is most of them - Logger, Shell, TestCommand, Platform::RunProcess) trips this same
+#     theoretical path, it isn't a signal worth chasing here.
+#   - cppcoreguidelines-avoid-magic-numbers / readability-magic-numbers: small literals like the
+#     "< 2" argument-count check in TestCommand or the token-offset "+ 1"/"+ 2" in the same file are
+#     already obvious in context; flagging them adds noise, not clarity.
+#   - readability-uppercase-literal-suffix: not exercised (no floating-point literals in this
+#     codebase yet); disabled preemptively to match the settled lowercase-suffix convention used
+#     elsewhere in the ecosystem this project's style follows.
+#   - misc-include-cleaner: RShell has no vcpkg dependencies yet and a dozen-odd source files;
+#     strict include-what-you-use hygiene is a separate, opt-in effort, not a default-on lint.
+#   - misc-no-recursion: Parser::ParseExpression/ParseOperand recurse into each other by design -
+#     that's how "(" triggers grouped sub-expression parsing at arbitrary nesting depth in a
+#     recursive-descent parser. The recursion is bounded by how deeply a single input line nests
+#     parentheses, which is never large in practice.
+#   - cppcoreguidelines-macro-usage: Utils/Logging.h's LOG_MESSAGE/LOG_TRACE/LOG_INFO/LOG_ERROR
+#     macros exist so call sites don't repeat "::Logger::Get()...LogType::" - not worth relitigating
+#     as free functions for four thin wrappers.
+#   - cppcoreguidelines-special-member-functions: every Command subclass declares only a destructor
+#     (to make it virtual/override) and is otherwise handled exclusively through
+#     std::shared_ptr<Command>, never copied directly; Token/TokenSpec are plain value types copied
+#     by the compiler-generated members deliberately. Requiring five boilerplate declarations on
+#     every leaf class to restate what the compiler already does correctly isn't worth it here.
+#   - readability-convert-member-functions-to-static: Executor::Execute, Parser::LogError,
+#     Shell::PrintPrompt, Logger::LogMessage and TestCommand::LogError are deliberately instance
+#     methods on objects that model a service (the executor, the parser, the shell, the logger) even
+#     though none of them touch member state today - static-izing them would fight that design
+#     rather than support it, and Logger in particular expects future state (e.g. verbosity).
+#   - cppcoreguidelines-pro-bounds-avoid-unchecked-container-access: flags ordinary operator[] use
+#     that's already bounds-checked by the surrounding code (e.g. Platform::RunProcess's args[i] in
+#     a "i < args.size()" loop, and args[0] after an "if (args.empty()) return false;" guard).
+#     Switching every such access to .at() would trade a clear invariant for exception-based control
+#     flow with no real safety gain.
+
+CheckOptions:
+  # Naming mirrors what's already consistently used across the codebase - this section describes
+  # the existing convention, it doesn't introduce a new one.
+  - key: readability-identifier-naming.NamespaceCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '^main$'
+
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterPackCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+
+  # Private/protected data members: mPascalCase (mInput, mArguments, mLeftCommand, ...) - no
+  # underscore, confirmed by an actual run across every class in the codebase.
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: CamelCase
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: m
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: CamelCase
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: m
+
+  # File-scope/class-static state: sPascalCase (Logger::sInstance) - no underscore, same convention
+  # as the m-prefixed members above.
+  - key: readability-identifier-naming.StaticVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticVariablePrefix
+    value: s
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: s
+
+  - key: readability-redundant-member-init.IgnoreBaseInCopyConstructors
+    value: 'true'
+  - key: modernize-loop-convert.UseCxx20ReverseRanges
+    value: 'true'
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: 'true'

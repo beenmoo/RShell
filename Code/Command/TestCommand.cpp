@@ -1,111 +1,47 @@
 #include "TestCommand.h"
 #include "Utils/Logging.h"
 
-#include <sys/stat.h>
-#include <unistd.h>
+#include <filesystem>
 #include <iostream>
-#include <algorithm>
+#include <system_error>
+#include <utility>
 
-TestCommand::TestCommand()
+TestCommand::TestCommand(std::string flag, std::string path)
+    : mFlag(std::move(flag)),
+      mPath(std::move(path))
 {
-    SetTokenType(TokenSpec::TokenType::Test);
 }
 
 bool TestCommand::Execute()
 {
-    struct stat buf;
+    std::error_code errorCode;
+    bool result = false;
 
-    if (GetArgumentCount() < 2)
+    if (mFlag == "-e")
     {
-        LogError();
-
-        return false;
+        result = std::filesystem::exists(mPath, errorCode);
     }
-
-    auto argsIt = begin();
-    std::string flag = (argsIt + 1)->GetValue();
-    std::string path = (argsIt + 2)->GetValue();
-
-    if (flag == "-e")
+    else if (mFlag == "-f")
     {
-        if (!stat(path.c_str(), &buf))
-        {
-            std::cout << "(True)\n";
-
-            return true;
-        }
-
-        std::cout << "(False)\n";
-
-        return false;
+        result = std::filesystem::is_regular_file(mPath, errorCode);
     }
-    else if (flag == "-f")
+    else if (mFlag == "-d")
     {
-        if (stat(path.c_str(), &buf))
-        {
-            std::cout << "(False)\n";
-
-            return false;
-        }
-
-        if (S_ISREG(buf.st_mode))
-        {
-            std::cout << "(True)\n";
-
-            return true;
-        }
-
-        std::cout << "(False)\n";
-
-        return false;
-    }
-    else if (flag == "-d")
-    {
-        if (stat(path.c_str(), &buf))
-        {
-            std::cout << "(False)\n";
-
-            return false;
-        }
-
-        if (S_ISDIR(buf.st_mode))
-        {
-            std::cout << "(True)\n";
-
-            return true;
-        }
-
-        std::cout << "(False)\n";
-
-        return false;
+        result = std::filesystem::is_directory(mPath, errorCode);
     }
     else
+    {
         LogError();
 
-    return false;
+        return false;
+    }
+
+    std::cout << (result ? "(True)\n" : "(False)\n");
+
+    return result;
 }
 
 void TestCommand::LogError() const
 {
     LOG_ERROR("Invalid syntax.");
-}
-
-LeftLegacyTestCommand::LeftLegacyTestCommand()
-{
-    SetTokenType(TokenSpec::TokenType::LeftLegacyTest);
-}
-
-bool LeftLegacyTestCommand::Execute()
-{
-    return false;
-}
-
-RightLegacyTestCommand::RightLegacyTestCommand()
-{
-    SetTokenType(TokenSpec::TokenType::RightLegacyTest);
-}
-
-bool RightLegacyTestCommand::Execute()
-{
-    return false;
 }

@@ -1,12 +1,11 @@
 #pragma once
 
-#include "ConnectorCommand.h"
+#include "CompositeCommand.h"
 
-class SemicolonCommand : public ConnectorCommand
+class SemicolonCommand : public CompositeCommand
 {
 public:
-    SemicolonCommand();
-    virtual ~SemicolonCommand() override = default;
+    using CompositeCommand::CompositeCommand;
 
-    virtual bool Execute() override;
+    bool Execute() override;
 };

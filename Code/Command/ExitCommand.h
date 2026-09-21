@@ -5,8 +5,7 @@
 class ExitCommand : public Command
 {
 public:
-    ExitCommand();
-    virtual ~ExitCommand() = default;
+    ~ExitCommand() override = default;
 
-    virtual bool Execute() override;
+    bool Execute() override;
 };

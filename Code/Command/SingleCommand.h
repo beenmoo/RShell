@@ -2,11 +2,17 @@
 
 #include "Command.h"
 
+#include <string>
+#include <vector>
+
 class SingleCommand : public Command
 {
 public:
-    SingleCommand();
-    virtual ~SingleCommand() = default;
+    explicit SingleCommand(std::vector<std::string> args);
+    ~SingleCommand() override = default;
 
-    virtual bool Execute() override;
+    bool Execute() override;
+
+private:
+    std::vector<std::string> mArgs;
 };

@@ -7,15 +7,7 @@
 class TokenSpec
 {
 public:
-    enum class TokenBaseType
-    {
-        None,
-        Operand,
-        Connector,
-        Bracket
-    };
-
-    enum class TokenType
+    enum class TokenType : std::uint8_t
     {
         None,
         SingleCommand,
@@ -30,10 +22,8 @@ public:
         RightParenthesis
     };
 
-public:
     void SetTokenType(TokenSpec::TokenType type);
     TokenSpec::TokenType GetTokenType() const;
-    TokenSpec::TokenBaseType GetTokenBaseType() const;
 
 private:
     TokenType mTokenType = TokenType::None;
@@ -43,7 +33,7 @@ class Token
 {
 public:
     Token(std::string_view value = "");
-    virtual ~Token() = default;
+    ~Token() = default;
 
     void SetValue(std::string_view value);
     const std::string& GetValue() const;

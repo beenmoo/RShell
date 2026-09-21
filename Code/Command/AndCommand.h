@@ -1,12 +1,11 @@
 #pragma once
 
-#include "ConnectorCommand.h"
+#include "CompositeCommand.h"
 
-class AndCommand : public ConnectorCommand
+class AndCommand : public CompositeCommand
 {
 public:
-    AndCommand();
-    virtual ~AndCommand() override = default;
+    using CompositeCommand::CompositeCommand;
 
-    virtual bool Execute() override;
+    bool Execute() override;
 };

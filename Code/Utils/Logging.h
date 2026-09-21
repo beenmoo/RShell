@@ -1,14 +1,13 @@
 #pragma once
 
-#include "Token/Token.h"
-
+#include <cstdint>
 #include <string>
 #include <iostream>
 
 class Logger
 {
 public:
-    enum class LogType
+    enum class LogType : std::uint8_t
     {
         None,
         Trace,
@@ -48,47 +47,11 @@ public:
 
     static Logger& Get()
     {
-        if (sInstance)
+        if (sInstance != nullptr)
             return *sInstance;
 
-        static Logger fallback = {};
-        return fallback;
-    }
-
-    static std::string TokenBaseTypeToString(TokenSpec::TokenBaseType type)
-    {
-        switch (type)
-        {
-        case TokenSpec::TokenBaseType::Operand:
-            return "Operand";
-        case TokenSpec::TokenBaseType::Connector:
-            return "Connector";
-        default:
-            break;
-        }
-
-        return "None";
-    }
-
-    static std::string TokenTypeToString(TokenSpec::TokenType type)
-    {
-        switch (type)
-        {
-        case TokenSpec::TokenType::SingleCommand:
-            return "SingleCommand";
-        case TokenSpec::TokenType::Exit:
-            return "Exit";
-        case TokenSpec::TokenType::Or:
-            return "Or";
-        case TokenSpec::TokenType::And:
-            return "And";
-        case TokenSpec::TokenType::Semicolon:
-            return "Semicolon";
-        default:
-            break;
-        }
-
-        return "None";
+        static Logger sFallback = {};
+        return sFallback;
     }
 
 private:

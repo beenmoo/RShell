@@ -31,7 +31,7 @@ void Shell::GetInput()
 
 void Shell::ProcessInput()
 {
-    std::vector<Token> tokens = mLexer.TokenizeInput(mInput);
-    auto postfix = mParser.Parse(tokens);
-    mExecutor.Execute(postfix);
+    const std::vector<Token> tokens = mLexer.TokenizeInput(mInput);
+    const auto root = mParser.Parse(tokens);
+    mExecutor.Execute(root);
 }

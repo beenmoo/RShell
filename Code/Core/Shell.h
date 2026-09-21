@@ -19,7 +19,6 @@ private:
     void GetInput();
     void ProcessInput();
 
-private:
     std::string mInput;
 
     Logger mLogger;

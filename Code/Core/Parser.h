@@ -1,51 +1,41 @@
 #pragma once
 
 #include "Token/Token.h"
-#include "Utils/Ref.h"
 
-#include <string>
-#include <vector>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <stack>
+#include <vector>
 
 class Command;
 
 class Parser
 {
-private:
-    enum class ShuntingState
-    {
-        ExpectOperand,
-        ExpectConnector,
-        ExpectBracket
-    };
+public:
+    std::shared_ptr<Command> Parse(const std::vector<Token>& tokens);
 
-    enum class ErrorState
+private:
+    enum class ErrorState : std::uint8_t
     {
-        None,
         OperandError,
         ConnectorError,
         BracketError
     };
 
-public:
-    std::vector<Ref<Command>> Parse(const std::vector<Token>& tokens);
+    std::shared_ptr<Command> ParseExpression(int minPrecedence = 1);
+    std::shared_ptr<Command> ParseOperand();
+    std::shared_ptr<Command> ParseSingleCommand();
+    std::shared_ptr<Command> ParseTest(TokenSpec::TokenType closingType);
 
-private:
-    void ConstructCommands();
-    bool ConstructPostfix();
-    bool ProcessConnectorsPostfix(const Ref<Command>& cmd);
-    bool ProcessLeftBracket(const Ref<Command>& cmd);
-    bool ProcessRightBracket(const Ref<Command>& cmd);
+    static int GetPrecedence(TokenSpec::TokenType type);
+    static std::shared_ptr<Command> MakeComposite(TokenSpec::TokenType opType,
+                                                  std::shared_ptr<Command> left,
+                                                  std::shared_ptr<Command> right);
+
+    TokenSpec::TokenType PeekType() const;
 
     void LogError(ErrorState state) const;
 
-    void Reset();
-
-private:
     std::vector<Token> mTokens;
-    std::vector<Ref<Command>> mInfixCommands;
-    std::vector<Ref<Command>> mPostfixCommands;
-    std::stack<Ref<Command>> mConnectors;
-    ShuntingState mShuntingState = ShuntingState::ExpectOperand;
+    std::size_t mPos = 0;
 };
