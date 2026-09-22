@@ -1,0 +1,13 @@
+---
+# Extends the root .clang-tidy for Tests/ specifically.
+#
+# gtest fixture members (state a SetUp() populates for TEST_F bodies to use directly, e.g.
+# ParserTest::mParser/mTempDir) are conventionally "protected" - that's gtest's own documented
+# pattern, not a lapse in encapsulation: a TEST_F body compiles as a method of a class derived
+# from the fixture, so there's no outside access to guard against.
+
+InheritParentConfig: true
+
+Checks: >
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -misc-non-private-member-variables-in-classes

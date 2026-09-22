@@ -6,7 +6,8 @@
 #include "Command/SemicolonCommand.h"
 #include "Command/SingleCommand.h"
 #include "Command/TestCommand.h"
-#include "Utils/Logging.h"
+
+#include <iostream>
 
 std::shared_ptr<Command> Parser::Parse(const std::vector<Token>& tokens)
 {
@@ -20,7 +21,7 @@ std::shared_ptr<Command> Parser::Parse(const std::vector<Token>& tokens)
 
     if (root != nullptr && mPos != mTokens.size())
     {
-        LogError(ErrorState::ConnectorError);
+        LogSyntaxError("end of input");
         return nullptr;
     }
 
@@ -69,7 +70,7 @@ std::shared_ptr<Command> Parser::ParseOperand()
 
         if (PeekType() != TokenSpec::TokenType::RightParenthesis)
         {
-            LogError(ErrorState::BracketError);
+            LogSyntaxError("')'");
             return nullptr;
         }
 
@@ -77,19 +78,29 @@ std::shared_ptr<Command> Parser::ParseOperand()
 
         return expr;
     }
-    case TokenSpec::TokenType::LeftLegacyTest:
-        ++mPos;
-        return ParseTest(TokenSpec::TokenType::RightLegacyTest);
-    case TokenSpec::TokenType::Test:
-        ++mPos;
-        return ParseTest(TokenSpec::TokenType::None);
-    case TokenSpec::TokenType::Exit:
-        ++mPos;
-        return std::make_shared<ExitCommand>();
-    case TokenSpec::TokenType::SingleCommand:
+    case TokenSpec::TokenType::SingleCommand: {
+        const std::string& value = mTokens[mPos].GetValue();
+
+        if (value == "[")
+        {
+            ++mPos;
+            return ParseTest(true);
+        }
+        if (value == "test")
+        {
+            ++mPos;
+            return ParseTest(false);
+        }
+        if (value == "exit")
+        {
+            ++mPos;
+            return std::make_shared<ExitCommand>();
+        }
+
         return ParseSingleCommand();
+    }
     default:
-        LogError(ErrorState::OperandError);
+        LogSyntaxError("an operand");
         return nullptr;
     }
 }
@@ -107,11 +118,11 @@ std::shared_ptr<Command> Parser::ParseSingleCommand()
     return std::make_shared<SingleCommand>(std::move(args));
 }
 
-std::shared_ptr<Command> Parser::ParseTest(TokenSpec::TokenType closingType)
+std::shared_ptr<Command> Parser::ParseTest(bool requireClosingBracket)
 {
     if (PeekType() != TokenSpec::TokenType::SingleCommand)
     {
-        LogError(ErrorState::OperandError);
+        LogSyntaxError("a test flag");
         return nullptr;
     }
 
@@ -120,18 +131,18 @@ std::shared_ptr<Command> Parser::ParseTest(TokenSpec::TokenType closingType)
 
     if (PeekType() != TokenSpec::TokenType::SingleCommand)
     {
-        LogError(ErrorState::OperandError);
+        LogSyntaxError("a path");
         return nullptr;
     }
 
     const std::string path = mTokens[mPos].GetValue();
     ++mPos;
 
-    if (closingType != TokenSpec::TokenType::None)
+    if (requireClosingBracket)
     {
-        if (PeekType() != closingType)
+        if (PeekType() != TokenSpec::TokenType::SingleCommand || mTokens[mPos].GetValue() != "]")
         {
-            LogError(ErrorState::BracketError);
+            LogSyntaxError("']'");
             return nullptr;
         }
 
@@ -180,18 +191,14 @@ TokenSpec::TokenType Parser::PeekType() const
     return mTokens[mPos].GetSpec().GetTokenType();
 }
 
-void Parser::LogError(ErrorState state) const
+void Parser::LogSyntaxError(std::string_view expected) const
 {
-    switch (state)
-    {
-    case ErrorState::OperandError:
-        LOG_ERROR("Unexpected token: expected Operand.\n");
-        break;
-    case ErrorState::ConnectorError:
-        LOG_ERROR("Unexpected token: expected Connector.\n");
-        break;
-    case ErrorState::BracketError:
-        LOG_ERROR("Unexpected token: expected Bracket.\n");
-        break;
-    }
+    std::cout << "Syntax error: expected " << expected << ", but found ";
+
+    if (mPos < mTokens.size())
+        std::cout << "'" << mTokens[mPos].GetValue() << "'";
+    else
+        std::cout << "end of input";
+
+    std::cout << ".\n";
 }

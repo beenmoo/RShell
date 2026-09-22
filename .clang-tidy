@@ -2,14 +2,14 @@
 # clang-tidy config for RShell.
 #
 # Scope: only project code is linted. HeaderFilterRegex below restricts diagnostics to headers
-# under Code/, so anything reached transitively from vcpkg-managed dependencies is never reported
-# on.
+# under Source/ and Tests/, so anything reached transitively from vcpkg-managed dependencies
+# (including gtest) is never reported on.
 #
 # To run against a specific build (needs a compile_commands.json - CMakePresets.json's "windows"
 # and "linux-debug"/"linux-release" presets set CMAKE_EXPORT_COMPILE_COMMANDS):
-#   clang-tidy -p Build/linux-debug Code/Core/Shell.cpp
+#   clang-tidy -p Build/linux-debug Source/Core/Shell.cpp
 # Or via run-clang-tidy across the whole tree:
-#   run-clang-tidy -p Build/linux-debug Code
+#   run-clang-tidy -p Build/linux-debug Source Tests
 
 Checks: >
   -*,
@@ -24,7 +24,6 @@ Checks: >
 
   -bugprone-exception-escape,
   -cppcoreguidelines-avoid-magic-numbers,
-  -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-special-member-functions,
   -misc-include-cleaner,
@@ -38,7 +37,7 @@ Checks: >
   -readability-uppercase-literal-suffix
 
 WarningsAsErrors: ''
-HeaderFilterRegex: 'RShell[\\/]Code[\\/].*'
+HeaderFilterRegex: 'RShell[\\/](Source|Tests)[\\/].*'
 FormatStyle: file
 
 # Rationale for the disables above, grouped by why - not a blanket "quiet everything" pass:
@@ -62,7 +61,7 @@ FormatStyle: file
 #     abrupt terminate(). The check still fires because iostream's operator<< can theoretically
 #     throw std::ios_base::failure if a stream's exception mask is configured to do so - which
 #     nothing in this codebase does. Since every function that touches std::cout/std::cerr (which
-#     is most of them - Logger, Shell, TestCommand, Platform::RunProcess) trips this same
+#     is most of them - Shell, Parser, TestCommand, Platform::RunProcess) trips this same
 #     theoretical path, it isn't a signal worth chasing here.
 #   - cppcoreguidelines-avoid-magic-numbers / readability-magic-numbers: small literals like the
 #     "< 2" argument-count check in TestCommand or the token-offset "+ 1"/"+ 2" in the same file are
@@ -76,19 +75,15 @@ FormatStyle: file
 #     that's how "(" triggers grouped sub-expression parsing at arbitrary nesting depth in a
 #     recursive-descent parser. The recursion is bounded by how deeply a single input line nests
 #     parentheses, which is never large in practice.
-#   - cppcoreguidelines-macro-usage: Utils/Logging.h's LOG_MESSAGE/LOG_TRACE/LOG_INFO/LOG_ERROR
-#     macros exist so call sites don't repeat "::Logger::Get()...LogType::" - not worth relitigating
-#     as free functions for four thin wrappers.
 #   - cppcoreguidelines-special-member-functions: every Command subclass declares only a destructor
 #     (to make it virtual/override) and is otherwise handled exclusively through
 #     std::shared_ptr<Command>, never copied directly; Token/TokenSpec are plain value types copied
 #     by the compiler-generated members deliberately. Requiring five boilerplate declarations on
 #     every leaf class to restate what the compiler already does correctly isn't worth it here.
-#   - readability-convert-member-functions-to-static: Executor::Execute, Parser::LogError,
-#     Shell::PrintPrompt, Logger::LogMessage and TestCommand::LogError are deliberately instance
-#     methods on objects that model a service (the executor, the parser, the shell, the logger) even
-#     though none of them touch member state today - static-izing them would fight that design
-#     rather than support it, and Logger in particular expects future state (e.g. verbosity).
+#   - readability-convert-member-functions-to-static: Executor::Execute and Shell::PrintPrompt are
+#     deliberately instance methods on objects that model a service (the executor, the shell) even
+#     though neither touches member state today - static-izing them would fight that design rather
+#     than support it.
 #   - cppcoreguidelines-pro-bounds-avoid-unchecked-container-access: flags ordinary operator[] use
 #     that's already bounds-checked by the surrounding code (e.g. Platform::RunProcess's args[i] in
 #     a "i < args.size()" loop, and args[0] after an "if (args.empty()) return false;" guard).
@@ -141,8 +136,9 @@ CheckOptions:
   - key: readability-identifier-naming.ProtectedMemberPrefix
     value: m
 
-  # File-scope/class-static state: sPascalCase (Logger::sInstance) - no underscore, same convention
-  # as the m-prefixed members above.
+  # File-scope/class-static state: sPascalCase - no underscore, same convention as the m-prefixed
+  # members above. No static variable exists in the codebase yet; this sets the convention for
+  # when one is added rather than describing an existing example.
   - key: readability-identifier-naming.StaticVariableCase
     value: CamelCase
   - key: readability-identifier-naming.StaticVariablePrefix

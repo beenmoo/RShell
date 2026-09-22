@@ -14,10 +14,6 @@ public:
         And,
         Or,
         Semicolon,
-        Exit,
-        Test,
-        LeftLegacyTest,
-        RightLegacyTest,
         LeftParenthesis,
         RightParenthesis
     };

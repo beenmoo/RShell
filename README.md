@@ -31,12 +31,24 @@ cmake --preset linux-debug
 cmake --build --preset linux-debug
 ```
 
-The binary is written to `Build/<preset>/rshell` (`Build/windows/Debug/rshell.exe` on Windows).
+The binary is written to `Build/<preset>/bin/rshell` (`Build/windows/bin/Debug/rshell.exe` on Windows).
+
+## Testing
+
+Tests use [GoogleTest](https://github.com/google/googletest) (fetched automatically via vcpkg).
+
+```sh
+ctest --preset linux-debug      # or windows-debug / windows-release / linux-release
+```
+
+or run the test binary directly (`Build/<preset>/bin/rshell_tests`,
+`Build\windows\bin\Debug\rshell_tests.exe` on Windows) for GoogleTest's own output. Set
+`-DRSHELL_BUILD_TESTS=OFF` at configure time to skip building the test suite.
 
 ## Running
 
 ```sh
-$ ./Build/linux-debug/rshell    # launch (the $ here is your OS shell)
+$ ./Build/linux-debug/bin/rshell    # launch (the $ here is your OS shell)
 $ echo hi && test -d /tmp       # this $ is RShell's own prompt
 hi
 (True)

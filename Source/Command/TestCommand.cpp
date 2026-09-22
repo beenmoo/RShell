@@ -1,5 +1,4 @@
 #include "TestCommand.h"
-#include "Utils/Logging.h"
 
 #include <filesystem>
 #include <iostream>
@@ -31,7 +30,7 @@ bool TestCommand::Execute()
     }
     else
     {
-        LogError();
+        ReportInvalidFlag();
 
         return false;
     }
@@ -41,7 +40,7 @@ bool TestCommand::Execute()
     return result;
 }
 
-void TestCommand::LogError() const
+void TestCommand::ReportInvalidFlag() const
 {
-    LOG_ERROR("Invalid syntax.");
+    std::cout << "test: unknown flag '" << mFlag << "'\n";
 }

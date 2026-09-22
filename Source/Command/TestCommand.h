@@ -13,7 +13,7 @@ public:
     bool Execute() override;
 
 private:
-    void LogError() const;
+    void ReportInvalidFlag() const;
 
     std::string mFlag;
     std::string mPath;

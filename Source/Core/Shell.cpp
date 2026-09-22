@@ -1,13 +1,10 @@
 #include "Shell.h"
 #include "Token/Token.h"
-#include "Utils/Logging.h"
 
 #include <iostream>
 
 void Shell::Run()
 {
-    Logger::SetInstance(&mLogger);
-
     while (true)
         Update();
 }
@@ -21,7 +18,7 @@ void Shell::Update()
 
 void Shell::PrintPrompt()
 {
-    LOG_MESSAGE("$ ");
+    std::cout << "$ ";
 }
 
 void Shell::GetInput()

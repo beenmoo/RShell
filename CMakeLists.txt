@@ -8,27 +8,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(rshell
-    Code/main.cpp
-    Code/Command/AndCommand.cpp
-    Code/Command/CompositeCommand.cpp
-    Code/Command/ExitCommand.cpp
-    Code/Command/OrCommand.cpp
-    Code/Command/SemicolonCommand.cpp
-    Code/Command/SingleCommand.cpp
-    Code/Command/TestCommand.cpp
-    Code/Core/Executor.cpp
-    Code/Core/Lexer.cpp
-    Code/Core/Parser.cpp
-    Code/Core/Shell.cpp
-    Code/Platform/Process.cpp
-    Code/Token/Token.cpp
-)
+# Keep every target's output in one flat, predictable location regardless of which subdirectory
+# defines it (otherwise multi-config generators like Visual Studio nest it per-subdirectory,
+# e.g. Build/windows/Source/Debug/rshell.exe instead of Build/windows/Debug/rshell.exe).
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-target_include_directories(rshell PRIVATE Code)
+add_subdirectory(Source)
 
-if (MSVC)
-    target_compile_options(rshell PRIVATE /W4)
-else()
-    target_compile_options(rshell PRIVATE -Wall -Wextra -Wpedantic)
+option(RSHELL_BUILD_TESTS "Build RShell's test suite" ON)
+
+if (RSHELL_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(Tests)
 endif()
