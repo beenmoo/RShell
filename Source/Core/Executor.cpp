@@ -1,7 +1,6 @@
 #include "Executor.h"
 
-void Executor::Execute(const std::shared_ptr<Command>& root)
+bool Executor::Execute(const std::shared_ptr<Command>& root)
 {
-    if (root != nullptr)
-        root->Execute();
+    return root->Execute();
 }

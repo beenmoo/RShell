@@ -3,17 +3,25 @@
 
 #include <iostream>
 
-void Shell::Run()
+bool Shell::Run()
 {
-    while (true)
-        Update();
+    while (Update())
+    {
+    }
+
+    return mLastResult;
 }
 
-void Shell::Update()
+bool Shell::Update()
 {
     PrintPrompt();
-    GetInput();
+
+    if (!GetInput())
+        return false;
+
     ProcessInput();
+
+    return true;
 }
 
 void Shell::PrintPrompt()
@@ -21,14 +29,16 @@ void Shell::PrintPrompt()
     std::cout << "$ ";
 }
 
-void Shell::GetInput()
+bool Shell::GetInput()
 {
-    std::getline(std::cin, mInput);
+    return static_cast<bool>(std::getline(std::cin, mInput));
 }
 
 void Shell::ProcessInput()
 {
     const std::vector<Token> tokens = mLexer.TokenizeInput(mInput);
     const auto root = mParser.Parse(tokens);
-    mExecutor.Execute(root);
+
+    if (root)
+        mLastResult = mExecutor.Execute(root);
 }

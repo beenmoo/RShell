@@ -33,6 +33,7 @@ Checks: >
   -portability-avoid-pragma-once,
   -readability-braces-around-statements,
   -readability-convert-member-functions-to-static,
+  -readability-implicit-bool-conversion,
   -readability-magic-numbers,
   -readability-uppercase-literal-suffix
 
@@ -54,6 +55,11 @@ FormatStyle: file
 #     drive-by rename instead of a deliberate adoption.
 #   - portability-avoid-pragma-once: every header opens with "#pragma once", universally supported
 #     by the compilers this project targets (MSVC, Clang, GCC).
+#   - readability-implicit-bool-conversion: pointers are used in their own boolean context
+#     throughout - "if (!left)"/"if (root)" (Parser.cpp), "if (buffer)" (Process.cpp) - rather than
+#     spelling out "== nullptr"/"!= nullptr". BOOL (Process.cpp's "created") is the one deliberate
+#     exception: it's a WinAPI int typedef, not a real bool, so comparing it explicitly against 0
+#     avoids implying it's interchangeable with an actual boolean.
 #
 # Noisy for this codebase, not indicative of a real problem:
 #   - bugprone-exception-escape: main() wraps Shell::Run() in try/catch(const std::exception&) -

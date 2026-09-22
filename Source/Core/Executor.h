@@ -7,5 +7,5 @@
 class Executor
 {
 public:
-    void Execute(const std::shared_ptr<Command>& root);
+    bool Execute(const std::shared_ptr<Command>& root);
 };

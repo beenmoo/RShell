@@ -46,7 +46,7 @@ protected:
         const std::ostringstream captured;
         std::streambuf* oldBuf = std::cout.rdbuf(captured.rdbuf());
 
-        if (root != nullptr)
+        if (root)
             root->Execute();
 
         std::cout.rdbuf(oldBuf);

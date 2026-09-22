@@ -10,7 +10,7 @@ int main()
     {
         Shell shell;
 
-        shell.Run();
+        return shell.Run() ? EXIT_SUCCESS : EXIT_FAILURE;
     }
     catch (const std::exception& e)
     {
@@ -18,6 +18,4 @@ int main()
 
         return EXIT_FAILURE;
     }
-
-    return EXIT_SUCCESS;
 }

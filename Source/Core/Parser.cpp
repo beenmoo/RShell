@@ -19,7 +19,7 @@ std::shared_ptr<Command> Parser::Parse(const std::vector<Token>& tokens)
 
     auto root = ParseExpression();
 
-    if (root != nullptr && mPos != mTokens.size())
+    if (root && mPos != mTokens.size())
     {
         LogSyntaxError("end of input");
         return nullptr;
@@ -32,7 +32,7 @@ std::shared_ptr<Command> Parser::ParseExpression(int minPrecedence)
 {
     auto left = ParseOperand();
 
-    if (left == nullptr)
+    if (!left)
         return nullptr;
 
     while (true)
@@ -47,7 +47,7 @@ std::shared_ptr<Command> Parser::ParseExpression(int minPrecedence)
 
         auto right = ParseExpression(opPrecedence + 1);
 
-        if (right == nullptr)
+        if (!right)
             return nullptr;
 
         left = MakeComposite(opType, std::move(left), std::move(right));
@@ -65,7 +65,7 @@ std::shared_ptr<Command> Parser::ParseOperand()
 
         auto expr = ParseExpression();
 
-        if (expr == nullptr)
+        if (!expr)
             return nullptr;
 
         if (PeekType() != TokenSpec::TokenType::RightParenthesis)

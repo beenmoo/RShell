@@ -3,8 +3,10 @@
     add_executable(rshell_tests
         Command/CompositeCommandTests.cpp
         Command/TestCommandTests.cpp
+        Core/ExecutorTests.cpp
         Core/LexerTests.cpp
         Core/ParserTests.cpp
+        Core/ShellTests.cpp
         Platform/ProcessTests.cpp
     )
 
